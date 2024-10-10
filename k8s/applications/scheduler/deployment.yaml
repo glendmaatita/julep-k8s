@@ -85,6 +85,22 @@ spec:
                   key: POSTGRESQL_USERNAME
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal
+  labels:
+    app: temporal
+spec:
+  selector:
+    app: temporal
+  ports:
+    - protocol: TCP
+      port: 7233
+      targetPort: 7233
+
+
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -122,3 +138,26 @@ spec:
                 configMapKeyRef:
                   name: security-secret
                   key: POSTGRESQL_USERNAME
+          volumeMounts:
+            - name: temporal-postgres-volume
+              mountPath: /etc/temporal/config/dynamicconfig/temporal-postgres.yaml
+              subPath: odoo.conf
+      volumes:
+        - name: temporal-postgres-volume
+          configMap:
+            name: temporal-postgres-config  
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-managed
+  labels:
+    app: temporal-managed
+spec:
+  selector:
+    app: temporal-managed
+  ports:
+    - protocol: TCP
+      port: 7233
+      targetPort: 7233

@@ -1,1 +1,95 @@
+# kubectl -n staging apply -f deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm-managed
+  labels:
+    app: litellm-managed
+spec:
+  selector:
+    matchLabels:
+      app: litellm-managed
+  template:
+    metadata:
+      labels:
+        app: litellm-managed
+    spec:
+      containers:
+        - name: litellm-managed
+          image: ghcr.io/berriai/litellm-database:main-v1.46.6
+          envFrom:
+            - secretRef:
+                name: security-secret
+            - configMapRef:
+                name: litellm-secret
+            - configMapRef:
+                name: litellm-config
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://${LITELLM_POSTGRES_USER}:${POSTGRESQL_USERNAME}@${POSTGRESQL_PASSWORD}:${POSTGRESQL_PORT}/${LITELLM_POSTGRES_DB}?sslmode=${LITELLM_POSTGRES_SSLMODE}"
+            - name: REDIS_URL
+              value: "redis://${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}"
+            
+          command: ["/bin/sh", "-c", "--"]
+          args:
+            - >
+              /app/config.yaml --port 4000 --num_workers 8 --telemetry False
+
+          volumeMounts:
+            - name: llmlite-config-volume
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: llmlite-config-volume
+          configMap:
+            name: litellm-config
+
+              
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: litellm
+  labels:
+    app: litellm
+spec:
+  selector:
+    matchLabels:
+      app: litellm
+  template:
+    metadata:
+      labels:
+        app: litellm
+    spec:
+      containers:
+        - name: litellm
+          image: ghcr.io/berriai/litellm-database:main-v1.46.6
+          envFrom:
+            - secretRef:
+                name: security-secret
+            - configMapRef:
+                name: litellm-secret
+            - configMapRef:
+                name: litellm-config
+          env:
+            - name: DATABASE_URL
+              value: "postgresql://${LITELLM_POSTGRES_USER}:${POSTGRESQL_USERNAME}@${POSTGRESQL_PASSWORD}:${POSTGRESQL_PORT}/${LITELLM_POSTGRES_DB}?sslmode=${LITELLM_POSTGRES_SSLMODE}"
+            - name: REDIS_URL
+              value: "redis://${REDIS_PASSWORD}@${REDIS_HOST}:${REDIS_PORT}"
+            
+          command: ["/bin/sh", "-c", "--"]
+          args:
+            - >
+              /app/config.yaml --port 4000 --num_workers 8 --telemetry False
+
+          volumeMounts:
+            - name: llmlite-config-volume
+              mountPath: /app/config.yaml
+              subPath: config.yaml
+      volumes:
+        - name: llmlite-config-volume
+          configMap:
+            name: litellm-config
 ---

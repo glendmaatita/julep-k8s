@@ -1,1 +1,35 @@
+# kubectl -n staging apply -f deployment.yaml
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: integrations-service
+  labels:
+    app: integrations-service
+spec:
+  selector:
+    matchLabels:
+      app: integrations-service
+  template:
+    metadata:
+      labels:
+        app: integrations-service
+    spec:
+      containers:
+        - name: integrations-service
+          image: julepai/integrations-service:latest
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: integrations-service
+  labels:
+    app: integrations-service
+spec:
+  selector:
+    app: integrations-service
+  ports:
+    - protocol: TCP
+      port: 8000
+      targetPort: 8000

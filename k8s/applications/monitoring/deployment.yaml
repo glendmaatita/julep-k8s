@@ -1,0 +1,83 @@
+# install Portainer
+
+# helm upgrade --install --create-namespace -n portainer portainer portainer/portainer \
+#     --set service.type=LoadBalancer \
+#     --set tls.force=true \
+#     --set image.tag=2.21.3
+
+# kubectl -n staging apply -f deployment.yaml
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prometheus
+  labels:
+    app: prometheus
+spec:
+  selector:
+    matchLabels:
+      app: prometheus
+  template:
+    metadata:
+      labels:
+        app: prometheus
+    spec:
+      containers:
+        - name: prometheus
+          image: prom/prometheus
+          env:
+            - name: TEMPORAL_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: temporal-config
+                  key: TEMPORAL_ADDRESS
+            - name: TEMPORAL_CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: temporal-config
+                  key: TEMPORAL_CORS_ORIGINS
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/prometheus/prometheus.yml
+              subPath: prometheus.yml
+            - name: prometheus-data
+              mountPath: /prometheus
+      volumes:
+        - name: prometheus-config-volume
+          configMap:
+            name: monitoring-config
+        - name: prometheus-data
+          persistentVolumeClaim:
+            claimName: prometheus-data-pvc
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: grafana
+  labels:
+    app: grafana
+spec:
+  selector:
+    matchLabels:
+      app: grafana
+  template:
+    metadata:
+      labels:
+        app: grafana
+    spec:
+      containers:
+        - name: grafana
+          image: prom/prometheus
+          envFrom:
+            - secretRef:
+                name: grafana-secret
+          volumeMounts:
+            - name: prometheus-config-volume
+              mountPath: /etc/grafana/provisioning/datasources/datasource.yaml
+              subPath: datasource.yaml
+      volumes:
+        - name: grafana-config-volume
+          configMap:
+          - name: monitoring-config
