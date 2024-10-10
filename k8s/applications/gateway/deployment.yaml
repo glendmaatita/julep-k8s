@@ -1,1 +1,69 @@
+# kubectl -n staging apply -f deployment.yaml
+
 ---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gateway
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gateway
+  template:
+    metadata:
+      labels:
+        app: gateway
+    spec:
+      containers:
+        - name: gateway
+          image: julepai/gateway:latest
+          envFrom:
+            - configMapRef:
+                name: gateway-config
+            - secretRef:
+                name: security-secret
+          env:
+            - name: AGENTS_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: AGENTS_API_URL
+            - name: AGENTS_API_KEY_HEADER_NAME
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: AGENTS_API_KEY_HEADER_NAME
+            - name: AGENTS_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: security-secret
+                  key: AGENTS_API_KEY
+            - name: JWT_SHARED_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: security-secret
+                  key: JWT_SHARED_KEY
+          volumeMounts:
+            - name: traefik-config
+              mountPath: /etc/traefik
+      volumes:
+        - name: traefik-config
+          configMap:
+            name: traefik-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: gateway
+  labels:
+    app: gateway
+spec:
+  selector:
+    app: gateway
+  ports:
+    - protocol: TCP
+      port: 80
+      targetPort: 80

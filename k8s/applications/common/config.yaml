@@ -346,3 +346,58 @@ data:
           - targets:
               - gateway:8082
 
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: traefik-config
+data:
+  traefik.yml: |
+    providers:
+      file:
+        filename: "/etc/traefik/traefik.yml"
+
+    enable: true
+    entryPoints:
+      web:
+        address: ":$GATEWAY_PORT"
+
+      metrics:
+        address: 127.0.0.1:8082
+
+    ping: true
+    accesslog: true
+    log:
+      level: $TRAEFIK_LOG_LEVEL
+
+    http:
+      routers:
+        agents-api:
+          entryPoints:
+            - web
+          rule: Path(`/api{path:.*}`)
+          middlewares:
+            - agents-api-chain
+            - agents-api-strip-prefix-api
+            - corsHeaders
+          service: service-agents-api
+          priority: 1
+
+        agents-api-docs:
+          entryPoints:
+            - web
+          rule: Path(`/api/{path:swagger|redoc|docs|scalar|openapi.json}`)
+          middlewares:
+            - agents-api-strip-prefix-api
+          service: service-agents-api
+          priority: 2
+
+        agents-api-redirect-to-docs:
+          entryPoints:
+            - web
+          rule: Path(`/`)
+          middlewares:
+            - agents-api-redirect-to-docs
+          service: service-agents-api
+          priority: 3
