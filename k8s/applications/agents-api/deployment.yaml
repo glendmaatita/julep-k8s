@@ -7,7 +7,6 @@ metadata:
   labels:
     app: agents-api-worker
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: agents-api-worker
@@ -26,7 +25,7 @@ spec:
                   name: agents-api-config
                   key: AGENTS_API_DEBUG
           envFrom:
-            - configMapRef:
+            - secretRef:
                 name: security-secret
             - configMapRef:
                 name: agents-api-config
@@ -42,7 +41,6 @@ metadata:
   labels:
     app: cozo-migrate
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: cozo-migrate
@@ -61,7 +59,7 @@ spec:
                   name: agents-api-config
                   key: AGENTS_API_DEBUG
           envFrom:
-            - configMapRef:
+            - secretRef:
                 name: security-secret
             - configMapRef:
                 name: agents-api-config
@@ -77,7 +75,6 @@ metadata:
   labels:
     app: agents-api-multi-tenant
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: agents-api-multi-tenant
@@ -95,7 +92,7 @@ spec:
             - name: AGENTS_API_PREFIX
               value: "/api"
           envFrom:
-            - configMapRef:
+            - secretRef:
                 name: security-secret
             - configMapRef:
                 name: agents-api-config
@@ -127,7 +124,6 @@ metadata:
   labels:
     app: agents-api
 spec:
-  replicas: 1
   selector:
     matchLabels:
       app: agents-api
@@ -140,7 +136,7 @@ spec:
         - name: agents-api
           image: julepai/agents-api:latest
           envFrom:
-            - configMapRef:
+            - secretRef:
                 name: security-secret
             - configMapRef:
                 name: agents-api-config

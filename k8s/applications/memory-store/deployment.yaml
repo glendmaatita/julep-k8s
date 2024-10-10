@@ -1,10 +1,7 @@
----
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: memory-store
-  labels:
-    app: memory-store
 spec:
   replicas: 1
   selector:
@@ -16,31 +13,56 @@ spec:
         app: memory-store
     spec:
       containers:
-        - name: memory-store
-          image: julepai/memory-store:${TAG}
-          ports:
-            - containerPort: 9070
-          env:
-            - name: COZO_AUTH_TOKEN
-              valueFrom:
-                secretKeyRef:
-                  name: cozo-secrets
-                  key: COZO_AUTH_TOKEN
-            - name: COZO_PORT
-              value: "${COZO_PORT:-9070}"
-            - name: COZO_MNT_DIR
-              value: "${MNT_DIR:-/data}"
-            - name: COZO_BACKUP_DIR
-              value: "${COZO_BACKUP_DIR:-/backup}"
-          volumeMounts:
-            - name: cozo-data
-              mountPath: /data
-            - name: cozo-backup
-              mountPath: /backup
-      volumes:
+      # Main memory-store container
+      - name: memory-store
+        image: julepai/memory-store:latest
+        envFrom:
+        - configMapRef:
+            name: memory-store-config
+        - secretRef:
+            name: security-secret
+        ports:
+        - containerPort: 9070
+        volumeMounts:
         - name: cozo-data
-          persistentVolumeClaim:
-            claimName: cozo-data
+          mountPath: /data
         - name: cozo-backup
-          persistentVolumeClaim:
-            claimName: cozo-backup
+          mountPath: /backup
+
+      # Sidecar container for backup cron
+      - name: backup-cron
+        image: bitnami/kubectl:latest
+        volumeMounts:
+        - name: cozo-backup
+          mountPath: /backup
+        command: ["/bin/sh", "-c"]
+        args:
+          - |
+            while true; do
+              echo "Running backup";
+              bash /app/backup.sh;
+              sleep 10800;  # Run every 3 hours
+            done;
+
+      volumes:
+      - name: cozo-data
+        persistentVolumeClaim:
+          claimName: cozo-data-pvc
+      - name: cozo-backup
+        persistentVolumeClaim:
+          claimName: cozo-backup-pvc
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: memory-store
+  labels:
+    app: memory-store
+spec:
+  selector:
+    app: memory-store
+  ports:
+    - protocol: TCP
+      port: 9070
+      targetPort: 9070

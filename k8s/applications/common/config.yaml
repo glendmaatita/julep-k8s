@@ -12,6 +12,7 @@ data:
   COZO_AUTH_TOKEN: ""
   LITELLM_MASTER_KEY: ""
   LITELLM_SALT_KEY: ""
+  POSTGRESQL_USERNAME : "postgres"
   POSTGRESQL_PASSWORD: ""
   POSTGRESQL_REPLICATION_PASSWORD: ""
   PGPOOL_ADMIN_USERNAME: ""
@@ -73,9 +74,41 @@ data:
   TEMPORAL_NAMESPACE: "default"
   TEMPORAL_WORKER_URL: "temporal:7233"
   TEMPORAL_POSTGRES_DB: "temporal"
-  TEMPORAL_POSTGRES_USER: "temporal"
+  # TEMPORAL_POSTGRES_USER: "temporal"
+  TEMPORAL_ADDRESS: "temporal:7233"
+  TEMPORAL_CORS_ORIGINS: "http://localhost:3000"
+
+  # additional config
+  POSTGRES_SEEDS: "postgresql.postgresql"
+  DB_HOST: "postgresql.postgresql"
+  DB_PORT: "5432"
+  POSTGRES_TLS_ENABLED: "false"
+  POSTGRES_TLS_CA_FILE: "/cert/ca.crt"
+  SQL_TLS_ENABLED: "false"
+  SQL_CA: "/cert/ca.crt"
+  POSTGRES_TLS_DISABLE_HOST_VERIFICATION: "false"
+  VISIBILITY_DBNAME: "temporal_visibility"
+  SKIP_SCHEMA_SETUP: "false"
+  SKIP_DB_CREATE: "false"
+  DYNAMIC_CONFIG_FILE_PATH: /etc/temporal/config/dynamicconfig/temporal-postgres.yaml
+  DB: "postgres12"
+  LOG_LEVEL: "info"
 
 ---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temporal-postgres-config
+data: |
+  limit.maxIDLength:
+    - value: 255
+      constraints: {}
+  system.forceSearchAttributesCacheRefreshOnRead:
+    - value: false
+      constraints: {}
+---
+
 
 apiVersion: v1
 kind: ConfigMap

@@ -1,1 +1,124 @@
+# kubectl -n staging apply -f deployment.yaml
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-ui
+  labels:
+    app: temporal-ui
+spec:
+  selector:
+    matchLabels:
+      app: temporal-ui
+  template:
+    metadata:
+      labels:
+        app: temporal-ui
+    spec:
+      containers:
+        - name: temporal-ui
+          image: temporalio/ui:latest 
+          env:
+            - name: TEMPORAL_ADDRESS
+              valueFrom:
+                configMapKeyRef:
+                  name: temporal-config
+                  key: TEMPORAL_ADDRESS
+            - name: TEMPORAL_CORS_ORIGINS
+              valueFrom:
+                configMapKeyRef:
+                  name: temporal-config
+                  key: TEMPORAL_CORS_ORIGINS
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: temporal-ui
+  labels:
+    app: temporal-ui
+spec:
+  selector:
+    app: temporal-ui
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal
+  labels:
+    app: temporal
+spec:
+  selector:
+    matchLabels:
+      app: temporal
+  template:
+    metadata:
+      labels:
+        app: temporal
+    spec:
+      containers:
+        - name: temporal
+          image: temporalio/auto-setup:1.25
+          envFrom:
+            - configMapRef:
+                name: temporal-config
+          env:
+            - name: POSTGRES_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: security-secret
+                  key: POSTGRESQL_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: temporal-config
+                  key: TEMPORAL_POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: security-secret
+                  key: POSTGRESQL_USERNAME
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: temporal-managed
+  labels:
+    app: temporal-managed
+spec:
+  selector:
+    matchLabels:
+      app: temporal-managed
+  template:
+    metadata:
+      labels:
+        app: temporal-managed
+    spec:
+      containers:
+        - name: temporal-managed
+          image: temporalio/auto-setup:1.25
+          envFrom:
+            - configMapRef:
+                name: temporal-config
+          env:
+            - name: POSTGRES_PWD
+              valueFrom:
+                secretKeyRef:
+                  name: security-secret
+                  key: POSTGRESQL_PASSWORD
+            - name: POSTGRES_DB
+              valueFrom:
+                configMapKeyRef:
+                  name: temporal-config
+                  key: TEMPORAL_POSTGRES_DB
+            - name: POSTGRES_USER
+              valueFrom:
+                configMapKeyRef:
+                  name: security-secret
+                  key: POSTGRESQL_USERNAME

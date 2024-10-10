@@ -1,1 +1,90 @@
+  # kubectl -n staging apply -f deployment.yaml
 ---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-embeddings-inference-cpu
+  labels:
+    app: text-embeddings-inference-cpu
+spec:
+  selector:
+    matchLabels:
+      app: text-embeddings-inference-cpu
+  template:
+    metadata:
+      labels:
+        app: text-embeddings-inference-cpu
+    spec:
+      containers:
+        - name: text-embeddings-inference-cpu
+          image: ghcr.io/huggingface/text-embeddings-inference:cpu-1.5
+          env:
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: AGENTS_API_DEBUG
+          envFrom:
+            - configMapRef:
+                name: security-secret
+            - configMapRef:
+                name: agents-api-config
+            - temporal-config:
+                name: temporal-config
+
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: text-embeddings-inference-gpu
+  labels:
+    app: text-embeddings-inference-gpu
+spec:
+  selector:
+    matchLabels:
+      app: text-embeddings-inference-gpu
+  template:
+    metadata:
+      labels:
+        app: text-embeddings-inference-gpu
+    spec:
+      containers:
+        - name: text-embeddings-inference-gpu
+          image: ghcr.io/huggingface/text-embeddings-inference:1.5
+          env:
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: AGENTS_API_DEBUG
+            - name: DTYPE
+              value: "float16"
+            - name: MODEL_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: EMBEDDING_MODEL_ID
+            - name: NVIDIA_VISIBLE_DEVICES
+              value: "all"
+          envFrom:
+            - configMapRef:
+                name: security-secret
+            - configMapRef:
+                name: agents-api-config
+            - temporal-config:
+                name: temporal-config
+          resources:
+            limits:
+              nvidia.com/gpu: 1
+          volumeMounts:
+            - name: dshm
+              mountPath: /dev/shm 
+      volumes:
+        - name: dshm
+          emptyDir:
+            medium: Memory
+            sizeLimit: 2Gi    
+
+
+
