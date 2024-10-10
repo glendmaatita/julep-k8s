@@ -1,0 +1,22 @@
+# helm repo add bitnami https://charts.bitnami.com/bitnami
+# helm repo update
+# helm install redis bitnami/redis -f values.yaml -n database
+image:
+  repository: redis/redis-stack-server
+  tag: 7.4
+
+architecture: replication
+
+auth:
+  enabled: true
+  sentinel: true
+  existingSecret: security-secret
+
+master:
+  persistence:
+    enabled: true
+
+replica:
+  replicaCount: 3
+  persistence:
+    enabled: true

@@ -1,0 +1,109 @@
+# kubectl -n staging apply -f config.yaml
+
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: security-secret
+type: Opaque
+data:
+  JWT_SHARED_KEY: ""
+  AGENTS_API_KEY: ""
+  COZO_AUTH_TOKEN: ""
+  LITELLM_MASTER_KEY: ""
+  LITELLM_SALT_KEY: ""
+  POSTGRESQL_PASSWORD: ""
+  POSTGRESQL_REPLICATION_PASSWORD: ""
+  PGPOOL_ADMIN_USERNAME: ""
+  PGPOOL_ADMIN_PASSWORD: ""
+  REDIS_PASSWORD: ""
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: memory-store-config
+data:
+  COZO_HOST: "http://memory-store:9070"
+  COZO_PORT: "9070"
+  COZO_ROCKSDB_DIR: "cozo.db"
+  COZO_BACKUP_DIR: "/backup"
+  COZO_MNT_DIR: "/data"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gateway-config
+data:
+  GATEWAY_PORT: "80"
+  TRAEFIK_LOG_LEVEL: "INFO"
+
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: agents-api-config
+data:
+  AGENTS_API_HOSTNAME: "localhost"
+  AGENTS_API_PROTOCOL: "http"
+  AGENTS_API_KEY_HEADER_NAME: "Authorization"
+  AGENTS_API_URL: "http://agents-api:8080"
+  TRUNCATE_EMBED_TEXT: "true"
+  WORKER_URL: "temporal:7233"
+  AGENTS_API_DEBUG: "false"
+  EMBEDDING_MODEL_ID: "Alibaba-NLP/gte-large-en-v1.5"
+  SUMMARIZATION_MODEL_NAME: "gpt-4-turbo"
+  NUM_GPUS: "1"
+  INTEGRATION_SERVICE_URL: "http://integrations:8000"
+
+---
+
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: temporal-config
+data:
+  TEMPORAL_ENDPOINT: "temporal:7233"
+  TEMPORAL_NAMESPACE: "default"
+  TEMPORAL_WORKER_URL: "temporal:7233"
+  TEMPORAL_POSTGRES_DB: "temporal"
+  TEMPORAL_POSTGRES_USER: "temporal"
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: litellm-config
+data:
+  LITELLM_URL: "http://litellm:4000"
+  LITELLM_POSTGRES_DB: "litellm"
+  LITELLM_POSTGRES_USER: "llmproxy"
+  LITELLM_REDIS_HOST: "litellm-redis"
+  LITELLM_REDIS_PORT: "6379"
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: litellm-secret
+type: Opaque
+data:
+  OPENAI_API_KEY: ""
+  HUGGING_FACE_HUB_TOKEN: ""
+  ANTHROPIC_API_KEY: ""
+  GROQ_API_KEY: ""
+  CLOUDFLARE_API_KEY: ""
+  CLOUDFLARE_ACCOUNT_ID: ""
+  NVIDIA_NIM_API_KEY: ""
+  GITHUB_API_KEY: ""
+  VOYAGE_API_KEY: ""
+  GOOGLE_APPLICATION_CREDENTIALS: ""
+

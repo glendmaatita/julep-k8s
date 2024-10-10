@@ -1,0 +1,164 @@
+# worker
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agents-api-worker
+  labels:
+    app: agents-api-worker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agents-api-worker
+  template:
+    metadata:
+      labels:
+        app: agents-api-worker
+    spec:
+      containers:
+        - name: agents-api-worker
+          image: julepai/worker:latest
+          env:
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: AGENTS_API_DEBUG
+          envFrom:
+            - configMapRef:
+                name: security-secret
+            - configMapRef:
+                name: agents-api-config
+            - temporal-config:
+                name: temporal-config
+
+---
+# cozo migrate
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cozo-migrate
+  labels:
+    app: cozo-migrate
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cozo-migrate
+  template:
+    metadata:
+      labels:
+        app: cozo-migrate
+    spec:
+      containers:
+        - name: cozo-migrate
+          image: julepai/cozo-migrate:latest
+          env:
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: agents-api-config
+                  key: AGENTS_API_DEBUG
+          envFrom:
+            - configMapRef:
+                name: security-secret
+            - configMapRef:
+                name: agents-api-config
+            - temporal-config:
+                name: temporal-config
+
+---
+# agents api multi-tenant
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agents-api-multi-tenant
+  labels:
+    app: agents-api-multi-tenant
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agents-api-multi-tenant
+  template:
+    metadata:
+      labels:
+        app: agents-api-multi-tenant
+    spec:
+      containers:
+        - name: agents-api-multi-tenant
+          image: julepai/agents-api:latest
+          env:
+            - name: AGENTS_API_MULTI_TENANT_MODE
+              value: "true"
+            - name: AGENTS_API_PREFIX
+              value: "/api"
+          envFrom:
+            - configMapRef:
+                name: security-secret
+            - configMapRef:
+                name: agents-api-config
+            - temporal-config:
+                name: temporal-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agents-api-multi-tenant
+  labels:
+    app: agents-api-multi-tenant
+spec:
+  selector:
+    app: agents-api-multi-tenant
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+
+# single tenant agents api
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: agents-api
+  labels:
+    app: agents-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: agents-api
+  template:
+    metadata:
+      labels:
+        app: agents-api
+    spec:
+      containers:
+        - name: agents-api
+          image: julepai/agents-api:latest
+          envFrom:
+            - configMapRef:
+                name: security-secret
+            - configMapRef:
+                name: agents-api-config
+            - temporal-config:
+                name: temporal-config
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: agents-api
+  labels:
+    app: agents-api
+spec:
+  selector:
+    app: agents-api
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+

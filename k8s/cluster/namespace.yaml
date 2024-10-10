@@ -1,0 +1,19 @@
+  # kubectl apply -f namespace.yaml
+---
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: staging
+  labels:
+    name: staging
+
+---
+
+kind: Namespace
+apiVersion: v1
+metadata:
+  name: database
+  labels:
+    name: database
+
+---

@@ -1,0 +1,20 @@
+# helm install postgresql -f pg-values.yml bitnami/postgresql-ha -n database
+image:
+  tag: 16
+
+postgresql:
+  existingSecret: security-secret
+
+pgpool:
+  existingSecret: security-secret
+
+persistence:
+  enabled: true
+
+volumePermissions:
+  enabled: true
+
+initdbScripts:
+  init_db.sql: |
+    CREATE DATABASE litellm;
+    CREATE DATABASE temporal;
